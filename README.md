@@ -1,6 +1,6 @@
 ## Tag-LLM: Repurposing General-Purpose LLMs for Specialized Domains
 
-PyTorch implementation of Tag-LLM proposed in the paper "[Tag-LLM: Repurposing General-Purpose LLMs for Specialized Domains](https://arxiv.org/)". 
+PyTorch implementation of Tag-LLM proposed in the paper "[Tag-LLM: Repurposing General-Purpose LLMs for Specialized Domains](https://arxiv.org/abs/2402.05140)". 
 
 ## Requirements
 
