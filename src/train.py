@@ -25,7 +25,7 @@ import torch.nn as nn
 import numpy as np
 from omegaconf.dictconfig import DictConfig
 from transformers import (
-    AutoConfiger,
+    AutoConfig,
     AutoTokenizer,
     LlamaTokenizer,
     is_torch_tpu_available,
