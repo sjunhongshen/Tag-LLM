@@ -203,9 +203,7 @@ def main(args: DictConfig) -> None:
             config=config,
             cache_dir=args.model.cache_dir,
             revision=args.model.model_revision,
-            use_auth_token=True if args.model.use_auth_token else None,
-            load_in_8bit=True,
-            device_map="auto"
+            use_auth_token=True if args.model.use_auth_token else None
             )
     else:
         model = model_cls(config)
