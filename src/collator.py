@@ -136,6 +136,8 @@ class DataCollatorForTagLLM:
             else:
                 if key == "labels":
                     pad_token_id = self.label_pad_token_id
+                elif key == "attention_mask":
+                    pad_token_id = 0
                 else:
                     pad_token_id = self.tokenizer.pad_token_id
 
