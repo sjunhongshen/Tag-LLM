@@ -27,14 +27,14 @@ def get_dataset(task_name, num_existing_tokens, tag_name_dict, num_token_per_tag
                 examples["task"] = [lang_dataset for _ in examples["translation"]]
                 examples["input"] = [example[source_lang] for example in examples["translation"]]
                 examples["output"] = [example[target_lang] for example in examples["translation"]]
-                examples["formulation"] = ["# # Input: <" + source_lang.upper() + "> <input>. \n# # Output: <" + target_lang.upper() + "> <Translate> <output>" for _ in examples["translation"]]
+                examples["formulation"] = ["# # Input: <" + source_lang.upper() + "> <input> \n# # Output: <" + target_lang.upper() + "> <Translate> <output>" for _ in examples["translation"]]
                 examples["regression"] = [False for _ in examples["translation"]]
                 examples["regression_dim"] = [-1 for _ in examples["translation"]]
 
                 examples["task"] += [target_lang + "-" + source_lang for _ in examples["translation"]]
                 examples["input"] += [example[target_lang] for example in examples["translation"]]
                 examples["output"] += [example[source_lang] for example in examples["translation"]]
-                examples["formulation"] += ["# # Input: <" + target_lang.upper() + "> <input>. \n# # Output: <" + source_lang.upper() + "> <Translate> <output>" for _ in examples["translation"]]
+                examples["formulation"] += ["# # Input: <" + target_lang.upper() + "> <input> \n# # Output: <" + source_lang.upper() + "> <Translate> <output>" for _ in examples["translation"]]
                 examples["regression"] += [False for _ in examples["translation"]]
                 examples["regression_dim"] += [-1 for _ in examples["translation"]]
 

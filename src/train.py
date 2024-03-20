@@ -25,7 +25,7 @@ import torch.nn as nn
 import numpy as np
 from omegaconf.dictconfig import DictConfig
 from transformers import (
-    AutoConfiger,
+    AutoConfig,
     AutoTokenizer,
     LlamaTokenizer,
     is_torch_tpu_available,
@@ -157,7 +157,7 @@ def main(args: DictConfig) -> None:
         args.model.autoregressive_attn_mask = True
 
     train_dataset, eval_dataset, tag_name_dict, num_new_tokens, tags_to_update, domain_tags = get_dataset(task_name, num_existing_tokens, tag_name_dict, args.model.num_token_per_tag, args.model.use_domain_tag, args.model.use_function_tag, args.model.regression, freeze, True)
-    config.update({"num_new_tokens": num_new_tokens, "output_dir": args.training.output_dir, "regression_out_dim": args.model.regression_out_dim})
+    config.update({"num_new_tokens": num_new_tokens, "output_dir": args.training.output_dir, "regression_out_dim": args.model.regression_out_dim, "num_existing_tokens": (num_existing_tokens if freeze else 0)})
     print("Output dir:", args.training.output_dir, "\nTag dict:", tag_name_dict, "\nTags to learn:", tags_to_update, "\nTrain data size:", len(train_dataset))
     
     if not os.path.exists(args.training.output_dir):
@@ -203,9 +203,7 @@ def main(args: DictConfig) -> None:
             config=config,
             cache_dir=args.model.cache_dir,
             revision=args.model.model_revision,
-            use_auth_token=True if args.model.use_auth_token else None,
-            load_in_8bit=True,
-            device_map="auto"
+            use_auth_token=True if args.model.use_auth_token else None
             )
     else:
         model = model_cls(config)
