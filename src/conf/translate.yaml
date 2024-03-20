@@ -1,0 +1,80 @@
+hydra:
+  run:
+    dir: .
+  sweep:
+    dir: .
+    subdir: .
+  job_logging:
+    root:
+      level: INFO
+  job:
+    env_set:
+      TOKENIZERS_PARALLELISM: "false"
+
+
+defaults:
+  - base_config  # see src/arguments.py
+  - _self_
+
+
+wandb:
+  log: false
+  entity: AUTHOR_NAME  # Change this to your wandb username.
+  project: PROJECT_NAME  # Change this to your wandb project name.
+  group: ${wandb.tag}
+  name: ${wandb.group}-run-${training.seed}
+
+
+model:
+  # markers: Language, Protein, SMILES    
+  # single domain tasks: Descriptor, QED
+  # multi domain tasks: DC, BA, Translate
+  task_name: Translate
+  exp_name: tag
+  # peft: #lora, prompttuning, linearprobe
+  tag_dict_path: exp/Translate # empty for domain tags, otherwise supply the path to the trained marker dictionary
+
+  regression: false # true for Descriptor, QED, DC, BA
+  regression_out_dim: 1
+  num_token_per_tag: 10 # number of actual tokens per special token
+  freeze_existing_tags: true # freeze already-learned markers
+  
+  # ablation studies
+  use_domain_tag: true
+  use_function_tag: true
+  add_ce_loss: false #true # add cross-entropy loss on non-special tokens in addition to regression loss during training
+  autoregressive_attn_mask: true
+
+  model_name_or_path: llama-7b
+  pretrained: true
+  cache_dir: .cache/
+
+training:
+  predict_with_generate: true
+  generation_max_length: 650
+
+  do_train: true
+  do_eval: true
+
+  output_dir: exp/${model.task_name}/${model.task_name}-${model.exp_name}-seed-${training.seed}
+
+  report_to: "none"  # THIS MUST BE NONE. Use wandb args to control logging.
+
+  dataloader_num_workers: 0  # If > 0, some weird process hanging might occur.
+
+  # Default training params: effective batch size = 16
+  num_train_epochs: 1
+  fp16: true
+  fp16_full_eval: true
+  per_device_train_batch_size: 4
+  per_device_eval_batch_size: 4
+  gradient_accumulation_steps: 8
+
+  # Save/eval every 1000 steps and track best model
+  overwrite_output_dir: false  # Resume training from checkpoint if it exists.
+  evaluation_strategy: steps
+  save_strategy: steps
+  eval_steps: 200000
+  save_steps: 1000
+  save_total_limit: 1
+  load_best_model_at_end: false
