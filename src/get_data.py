@@ -177,7 +177,7 @@ def get_dataset(task_name, num_existing_tokens, tag_name_dict, num_token_per_tag
 
                     for j, d in enumerate(des[:1]):
                         examples["task"].append("Descriptor")
-                        if start == "" and end == "" and func == "":
+                        if start == "" and func == "":
                             examples["formulation"].append("# # Input: The protein sequence is " + start + "<input>. \n# # Output: The descriptor value is ")
                         else:
                             examples["formulation"].append("# # Input: The protein sequence is " + start + "<input>. \n# # Output: The descriptor value is " + func + "<output>.")
