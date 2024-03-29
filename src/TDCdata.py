@@ -67,7 +67,7 @@ class BinaryDataset_BA(Dataset):
         else:
             instance["formulation"] = "# # Input: The protein sequence is " + self.start_protein + "<input 0>. \nThe SMILES of the drug is " + self.start_smiles + "<input 1>. \n# # Output: The binding affinity is " + self.func + "<output>."
                         
-        instance["input"] = [''.join(self.targets.iloc[i]), ' '.join(self.drugs.iloc[i]), self.df["Target_ID"].iloc[i], str(self.df["Drug_ID"].iloc[i])]
+        instance["input"] = [''.join(self.targets.iloc[i]), ''.join(self.drugs.iloc[i]), self.df["Target_ID"].iloc[i], str(self.df["Drug_ID"].iloc[i])]
         instance["output"] = str(float(self.labels.iloc[i]))[:6]
         if len(instance["output"]) < 6:
             instance["output"] += "0" * (6-len(instance["output"]))
@@ -119,7 +119,7 @@ class BinaryDataset_DC(Dataset):
         else:
             instance["formulation"] = "# # Input: Drug 1 is <input 2>. Its SMILES is " + self.start + "<input 0>. \nDrug 2 is <input 3>. Its SMILES is " + self.start + "<input 1>. \n# # Output: The drug combination sensitivity score is " + self.func + "<output>."
             
-        instance["input"] = [' '.join(self.drugs.iloc[i]), ' '.join(self.targets.iloc[i]), self.df["Drug1_ID"].iloc[i], self.df["Drug2_ID"].iloc[i]]
+        instance["input"] = [''.join(self.drugs.iloc[i]), ''.join(self.targets.iloc[i]), self.df["Drug1_ID"].iloc[i], self.df["Drug2_ID"].iloc[i]]
         instance["output"] = str(float(self.labels.iloc[i]) * 0.1)[:6]
         if len(instance["output"]) < 6:
             instance["output"] += "0" * (6-len(instance["output"]))

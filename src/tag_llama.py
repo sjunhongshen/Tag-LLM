@@ -340,9 +340,12 @@ class AugmentedTokenEncoder(torch.nn.Module):
         self.token_dim = config.hidden_size
         self.original_embedder = embedder
 
+        if not config.freeze:
+            num_new_tokens += num_existing_tokens
+
         self.embedding = nn.Embedding(num_new_tokens, self.token_dim)
 
-        self.vocab_size = PRETRAINED_VOCAB_SIZE + num_existing_tokens
+        self.vocab_size = PRETRAINED_VOCAB_SIZE + (num_existing_tokens if config.freeze else 0)
         self.added_tokens = [self.vocab_size + i for i in range(num_new_tokens)]
 
 
@@ -356,7 +359,7 @@ class AugmentedTokenEncoder(torch.nn.Module):
         
         # Special tokens
         token_indices = torch.zeros_like(input_ids)
-
+    
         for tid in self.added_tokens:
             token_indices = token_indices + (input_ids == tid)
 
@@ -390,7 +393,7 @@ class TagLlamaModel(LlamaPreTrainedModel):
         self.vocab_size = config.vocab_size
 
         self.embed_tokens = nn.Embedding(
-            config.vocab_size + config.num_existing_tokens, config.hidden_size, self.padding_idx
+            config.vocab_size + (config.num_existing_tokens if config.freeze else 0), config.hidden_size, self.padding_idx
         )
 
         if config.num_new_tokens > 0:
@@ -667,6 +670,9 @@ class TagLlamaForCausalLM(LlamaPreTrainedModel, TagGenerationMixin):
         self.lm_head = nn.Linear(config.hidden_size, config.vocab_size, bias=False)
 
         self.lm_head_reg = None
+        if config.regression:
+            self.lm_head_reg = nn.Linear(config.hidden_size, config.regression_out_dim, bias=False)
+
         self.word_embeddings = None
 
         # Initialize weights and apply final processing
@@ -678,6 +684,7 @@ class TagLlamaForCausalLM(LlamaPreTrainedModel, TagGenerationMixin):
         self.clfl = 0
         self.clfstep = 0
         self.output_dir = config.output_dir
+        self.print_loss_detail = True
 
     def get_input_embeddings(self):
         return self.model.embed_tokens
@@ -752,12 +759,12 @@ class TagLlamaForCausalLM(LlamaPreTrainedModel, TagGenerationMixin):
             loss = 0
             if reg_idx is not None:
 
-                logits_reg = self.lm_head_reg(hidden_states[reg_idx, reg_pred_idx, :])
-                reg_val = logits_reg[torch.arange(logits_reg.shape[0]), reg_dim]
-                label_reg = label_reg.to(reg_val.dtype) 
+                logits = self.lm_head_reg(hidden_states[reg_idx, reg_pred_idx, :])
+                logits = logits[torch.arange(logits.shape[0]), reg_dim]
+                label_reg = label_reg.to(logits.dtype) 
                 loss_fct = MSELoss()
 
-                loss = loss + loss_fct(reg_val, label_reg) * 100
+                loss = loss + loss_fct(logits, label_reg) * 100
 
                 self.regl = (self.regl * self.regstep + loss.item()) / (self.regstep + 1)
                 self.regstep += 1
@@ -794,7 +801,7 @@ class TagLlamaForCausalLM(LlamaPreTrainedModel, TagGenerationMixin):
             return (loss,) + output if loss is not None else output
 
 
-        if self.step_for_save % 1000 == 0:
+        if self.step_for_save % 1000 == 0 and self.print_loss_detail:
             print("Accumulated MSE:", self.regl, "\tAccumulated CE:", self.clfl)
 
             try:

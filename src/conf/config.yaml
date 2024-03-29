@@ -29,15 +29,14 @@ model:
   # markers: Language, Protein, SMILES    
   # single domain tasks: Descriptor, QED
   # multi domain tasks: DC, BA, Translate
-  task_name: Translate
+  task_name: BA
   exp_name: tag
   # peft: #lora, prompttuning, linearprobe
-  tag_dict_path: exp/Translate # empty for domain tags, otherwise supply the path to the trained marker dictionary
+  tag_dict_path: exp/BA # empty for domain tags, otherwise supply the path to the trained marker dictionary
 
-  regression: false # true for Descriptor, QED, DC, BA
+  regression: true # true for Descriptor, QED, DC, BA
   regression_out_dim: 1
-  num_token_per_tag: 20 # number of actual tokens per special token
-
+  num_token_per_tag: 10 # number of actual tokens per special token
   freeze_existing_tags: true # freeze already-learned markers
   
   # ablation studies
@@ -79,4 +78,4 @@ training:
   save_steps: 1000
   save_total_limit: 1
   load_best_model_at_end: false
-
+1tfalseDCDCDCDescriptorDescriptorDescriptor.yamdQEDQEDQED.yaml# peft: #lora, prompttuning, linearprobetrue

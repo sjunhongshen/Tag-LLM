@@ -95,16 +95,24 @@ class DataCollatorForTagLLM:
             if len(tokenized_input) > max_length:
                 if num_passed == 0 and idx == len(batch) - 1:
                     to_trim = len(tokenized_input) - max_length
-                    labels = labels[to_trim:]
-                    tokenized_input = tokenized_input[to_trim:]
+                    if instance["task"] == "Generation":
+                        labels = labels[:to_trim]
+                        tokenized_input = tokenized_input[:to_trim]
+                    else:
+                        labels = labels[to_trim:]
+                        tokenized_input = tokenized_input[to_trim:]
                 else:
                     if instance["regression"] or self.eval_mode:
                         prompt_len = prompt_len[:-1]
                         continue
 
                     to_trim = len(tokenized_input) - max_length
-                    labels = labels[to_trim:]
-                    tokenized_input = tokenized_input[to_trim:]
+                    if instance["task"] == "Generation":
+                        labels = labels[:to_trim]
+                        tokenized_input = tokenized_input[:to_trim]
+                    else:
+                        labels = labels[to_trim:]
+                        tokenized_input = tokenized_input[to_trim:]
             
             model_inputs["input_ids"].append(tokenized_input)
             model_inputs["labels"].append(labels)

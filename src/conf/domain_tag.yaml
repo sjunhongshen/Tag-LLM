@@ -31,6 +31,7 @@ model:
   # multi domain tasks: DC, BA, Translate
   task_name: Language 
   exp_name: tag
+  # peft: #lora, prompttuning, linearprobe
   tag_dict_path: # empty for domain tags, otherwise supply the path to the trained marker dictionary
 
   regression: false # true for Descriptor, QED, DC, BA

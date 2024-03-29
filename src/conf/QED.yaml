@@ -29,10 +29,10 @@ model:
   # markers: Language, Protein, SMILES    
   # single domain tasks: Descriptor, QED
   # multi domain tasks: DC, BA, Translate
-  task_name: BA
+  task_name: QED
   exp_name: tag
   # peft: #lora, prompttuning, linearprobe
-  tag_dict_path: exp/BA # empty for domain tags, otherwise supply the path to the trained marker dictionary
+  tag_dict_path: exp/QED # empty for domain tags, otherwise supply the path to the trained marker dictionary
 
   regression: true # true for Descriptor, QED, DC, BA
   regression_out_dim: 1
@@ -42,8 +42,8 @@ model:
   # ablation studies
   use_domain_tag: true
   use_function_tag: true
-  add_ce_loss: false # add cross-entropy loss on non-special tokens in addition to regression loss during training
-  autoregressive_attn_mask: true
+  add_ce_loss: false #true # add cross-entropy loss on non-special tokens in addition to regression loss during training
+  autoregressive_attn_mask: false
 
   model_name_or_path: llama-7b
   pretrained: true
@@ -54,7 +54,7 @@ training:
   generation_max_length: 650
 
   do_train: true
-  do_eval: false
+  do_eval: true
 
   output_dir: exp/${model.task_name}/${model.task_name}-${model.exp_name}-seed-${training.seed}
 
@@ -78,4 +78,4 @@ training:
   save_steps: 1000
   save_total_limit: 1
   load_best_model_at_end: false
-
+1tfalseDCDCDCDescriptorDescriptorDescriptor.yamd

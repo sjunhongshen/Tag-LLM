@@ -234,9 +234,7 @@ def get_dataset(task_name, num_existing_tokens, tag_name_dict, num_token_per_tag
             
             for idx, seq in enumerate(examples[target]):
                 if len(seq) <= 512:
-                    if not is_7b:
-                        seq = seq[:256]
-                    seq = ' '.join(seq)
+                    seq = ''.join(seq)
                     examples["task"].append("Generation")
                     examples["formulation"].append("<SMILES> <input>")
                     examples["input"].append(seq)
@@ -288,7 +286,7 @@ def get_dataset(task_name, num_existing_tokens, tag_name_dict, num_token_per_tag
             for idx, seq in enumerate(examples[target]):
                 if len(seq) <= 512:
                     d = QED.qed(Chem.MolFromSmiles(seq))
-                    seq = ' '.join(seq)
+                    seq = ''.join(seq)
 
                     examples["task"].append("QED")
                     if start == "" and func == "":
@@ -356,8 +354,7 @@ def get_dataset(task_name, num_existing_tokens, tag_name_dict, num_token_per_tag
             existing_tokens = ["<Protein>", "<SMILES>"] if use_domain_tag else []
             for tname in existing_tokens:
                 idx = tag_name_dict[tname].find(">")
-                domain_tags.append(int(tag_name_dict[tname][5:idx]))    
-            
+                domain_tags.append(int(tag_name_dict[tname][5:idx]))     
         
             tags_to_update =  ["<BA>"]
             for tname in tags_to_update:
@@ -370,7 +367,6 @@ def get_dataset(task_name, num_existing_tokens, tag_name_dict, num_token_per_tag
                 idx = tag_name_dict[tname].find(">")
                 domain_tags.append(int(tag_name_dict[tname][5:idx]))    
             
-        
             tags_to_update =  ["<DC>"]
             for tname in tags_to_update:
                 tag_name_dict[tname] = "".join(["<TAG " + str(i) + ">" for i in range(num_existing_tokens, num_existing_tokens + num_token_per_tag)])

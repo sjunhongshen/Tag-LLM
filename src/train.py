@@ -1,19 +1,5 @@
-# coding=utf-8
-# Copyright 2020 The HuggingFace Inc. team. All rights reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
 """
-Tag training script, adapted from huggingface's run_clm.py example.
+Tag training script, adapted from https://github.com/jayelm/gisting repo.
 """
 
 import logging
@@ -157,7 +143,7 @@ def main(args: DictConfig) -> None:
         args.model.autoregressive_attn_mask = True
 
     train_dataset, eval_dataset, tag_name_dict, num_new_tokens, tags_to_update, domain_tags = get_dataset(task_name, num_existing_tokens, tag_name_dict, args.model.num_token_per_tag, args.model.use_domain_tag, args.model.use_function_tag, args.model.regression, freeze, True)
-    config.update({"num_new_tokens": num_new_tokens, "output_dir": args.training.output_dir, "regression_out_dim": args.model.regression_out_dim, "num_existing_tokens": (num_existing_tokens if freeze else 0)})
+    config.update({"num_new_tokens": num_new_tokens, "output_dir": args.training.output_dir, "regression": args.model.regression, "regression_out_dim": args.model.regression_out_dim, "num_existing_tokens": num_existing_tokens, "freeze": freeze})
     print("Output dir:", args.training.output_dir, "\nTag dict:", tag_name_dict, "\nTags to learn:", tags_to_update, "\nTrain data size:", len(train_dataset))
     
     if not os.path.exists(args.training.output_dir):
@@ -246,20 +232,13 @@ def main(args: DictConfig) -> None:
         if embedding_weights is not None:
             if not freeze:
                 model.model.augmented_embedder.embedding.weight.data = model.model.augmented_embedder.embedding.weight.data.to(avg_emb.dtype)
-                embedding_weights=embedding_weights.to(model.model.augmented_embedder.embedding.weight.device)
+                embedding_weights = embedding_weights.to(model.model.augmented_embedder.embedding.weight.device)
                 model.model.augmented_embedder.embedding = nn.Embedding.from_pretrained(torch.cat([embedding_weights, model.model.augmented_embedder.embedding.weight.data])).to(avg_emb.dtype)
             else:
-                model.model.augmented_embedder.original_embedder.weight.data = model.model.augmented_embedder.original_embedder.weight.data.to(avg_emb.dtype)
-                embedding_weights=embedding_weights.to(model.model.augmented_embedder.original_embedder.weight.device)
-                model.model.augmented_embedder.original_embedder = nn.Embedding.from_pretrained(torch.cat([model.model.augmented_embedder.original_embedder.weight.data, embedding_weights ])).to(avg_emb.dtype)
-    
-        if freeze:
-            model.model.augmented_embedder.vocab_size = model.model.augmented_embedder.original_embedder.weight.data.shape[0]
-            model.model.augmented_embedder.added_tokens = [model.model.augmented_embedder.vocab_size + i for i in range(num_new_tokens)]
-        else:
-            model.model.augmented_embedder.added_tokens = [model.model.augmented_embedder.vocab_size + i for i in range(num_existing_tokens + num_new_tokens)]
-     
+                embedding_weights = embedding_weights.to(model.model.augmented_embedder.original_embedder.weight.device)
+                model.model.augmented_embedder.original_embedder = nn.Embedding.from_pretrained(torch.cat([model.model.embed_tokens.weight.data, embedding_weights ])).to(avg_emb.dtype)
 
+    
     ###### Regression input/output initialization ######
 
     if args.model.regression:
@@ -296,7 +275,7 @@ def main(args: DictConfig) -> None:
     # Check if special token has already been added to the model (e.g. because
     # we're resuming from a checkpoint.)
     
-    if len(tokenizer) != tag_llama.PRETRAINED_VOCAB_SIZE + num_new_tokens:
+    if len(tokenizer) != tag_llama.PRETRAINED_VOCAB_SIZE + num_new_tokens + num_existing_tokens:
         # Add tag to tokenizer
         tokenizer.add_special_tokens({"additional_special_tokens": ["<TAG " + str(i) + ">" for i in range(num_existing_tokens + num_new_tokens)]})        
         

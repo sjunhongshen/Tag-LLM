@@ -228,7 +228,7 @@ def main(args: DictConfig) -> None:
             if embedding_weights is not None:
                 if not freeze:
                     model.model.augmented_embedder.embedding.weight.data = model.model.augmented_embedder.embedding.weight.data.to(avg_emb.dtype)
-                    embedding_weights = embedding_weights.to(model.model.augmented_embedder.embedding.weight.device)
+                    embedding_weights=embedding_weights.to(model.model.augmented_embedder.embedding.weight.device)
                     model.model.augmented_embedder.embedding = nn.Embedding.from_pretrained(torch.cat([embedding_weights, model.model.augmented_embedder.embedding.weight.data])).to(avg_emb.dtype)
                 else:
                     embedding_weights = embedding_weights.to(model.model.augmented_embedder.original_embedder.weight.device)
@@ -270,74 +270,45 @@ def main(args: DictConfig) -> None:
             eval_mode=True
                 )
 
-    custom_input = None
-    custom_formulation = None
-
-    # Setting custom_input to None -> evaluation on text generation datasets, otherwise you can try out your own input
-    # custom_formulation = "<EN> <input>"
-    # custom_input = ""
-    
-    if custom_input is None:
-        responses = []
-        labels = []
-        prompts = []
-        for i in range(len(eval_dataset)):
-            instance = eval_dataset.__getitem__(i)
-            instance["formulation"] = instance["formulation"].replace(" <output>", "")
-            model_inputs = data_collator([instance])
-            input_len = len(model_inputs["input_ids"][0])
-            print("-"*38)
-            print("[formulation]")
-            print(instance["formulation"])
-            print("[input]")
-            print(instance["input"])
-
-            for key, value in model_inputs.items():
-                if torch.is_tensor(model_inputs[key]):
-                    model_inputs[key] = model_inputs[key].to(model.device)
-            
-            generated_ids = model.generate(**model_inputs, max_new_tokens=512, do_sample=True, temperature=0.6, top_p=0.95, pad_token_id=data_collator.tokenizer.eos_token_id)
-            generated_ids = [generated_ids[0][input_len:]]
-
-            generated_texts = data_collator.tokenizer.batch_decode(generated_ids)[0]
-            print("[pred]")
-            print(generated_texts)
-            print("[gt]")
-            print(instance["output"])
-
-            labels.append(instance["output"])
-            responses.append(generated_texts)
-            prompts.append(instance["input"])
-
-        import csv
-        with open(args.training.output_dir + "/" + task_name + "_response.csv", "wt") as fp:
-            fields = ["prompt", "label", "output"]  # write header
-            writer = csv.DictWriter(fp, fieldnames=fields) 
-            writer.writeheader()
-            rows = []
-            for i in range(len(prompts)):
-                rows.append({"prompt": prompts[i], "label": labels[i], "output": responses[i]})
-            writer.writerows(rows)
-
-    else:
-        print("[formulation]")
-        print(custom_formulation)
-        print("[input]")
-        print(custom_input)
-        model_inputs = data_collator([{"input": custom_input, "output": custom_input, "formulation": custom_formulation, "task": "Generation", "regression": False, "regression_dim": -1}])
+    responses = []
+    labels = []
+    prompts = []
+    for i in range(len(eval_dataset)):
+        instance = eval_dataset.__getitem__(i)
+        model_inputs = data_collator([instance])
         input_len = len(model_inputs["input_ids"][0])
+        print("-"*38)
+        print("[formulation]")
+        print(instance["formulation"])
+        print("[input]")            
+        print(instance["input"])
 
         for key, value in model_inputs.items():
             if torch.is_tensor(model_inputs[key]):
                 model_inputs[key] = model_inputs[key].to(model.device)
-        
-        generated_ids = model.generate(**model_inputs, max_new_tokens=512, do_sample=True, temperature=0.6, top_p=0.95, pad_token_id=data_collator.tokenizer.eos_token_id)
-        generated_ids = [generated_ids[0][input_len:]]
+            
+        reg_val = model(**model_inputs).logits
+        reg_val = reg_val.detach().cpu().numpy()[0]
 
-        generated_texts = data_collator.tokenizer.batch_decode(generated_ids)[0]
         print("[pred]")
-        print(generated_texts)
-    
+        print(reg_val)
+        print("[gt]")
+        print(instance["output"])
+
+        labels.append(float(instance["output"]))
+        responses.append(float(reg_val))
+        prompts.append(instance["input"])
+
+    import csv
+    with open(args.training.output_dir + "/" + task_name + "_response.csv", "wt") as fp:
+        fields = ["prompt", "label", "output"]  # write header
+        writer = csv.DictWriter(fp, fieldnames=fields) 
+        writer.writeheader()
+        rows = []
+        for i in range(len(prompts)):
+            rows.append({"prompt": prompts[i], "label": labels[i], "output": responses[i]})
+        writer.writerows(rows)
+
 
 
 if __name__ == "__main__":

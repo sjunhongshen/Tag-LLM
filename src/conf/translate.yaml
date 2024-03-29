@@ -54,7 +54,7 @@ training:
   generation_max_length: 650
 
   do_train: true
-  do_eval: true
+  do_eval: false
 
   output_dir: exp/${model.task_name}/${model.task_name}-${model.exp_name}-seed-${training.seed}
 
