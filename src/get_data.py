@@ -119,8 +119,6 @@ def get_dataset(task_name, num_existing_tokens, tag_name_dict, num_token_per_tag
             examples["regression_dim"] = []
             for _, seq in enumerate(examples[source]):
                 if len(seq) <= 512:
-                    if not is_7b:
-                        seq = seq[:256]
                     seq = ' '.join(seq)
                     examples["task"].append("Generation")
                     examples["formulation"].append("<Protein> <input>")
