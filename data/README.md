@@ -1,3 +1,3 @@
 # Data
 
-This folder contains training data
+Place datasets inside this folder.
